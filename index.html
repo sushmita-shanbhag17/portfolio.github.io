@@ -514,6 +514,174 @@ return ET
 								* SDG 2: Zero Hunger<br>
 								*SDG 13: Climate Action<br>
 								*SDG 11: Sustainable Cities and Communities</p>
+				       <h2>project implementation</h2>
+				       <pre><code>
+					       #include <iostream>
+#include <limits>
+#include <iomanip>
+
+using namespace std;
+
+#define MAX_FIELDS 100
+#define MAX_CONNECTIONS 100
+
+typedef pair<string, double> Edge; 
+
+void addEdge(string fields[], double distances[MAX_FIELDS][MAX_FIELDS], int u, int v, double weight) {
+    distances[u][v] = weight;
+    distances[v][u] = weight;
+}
+
+void findClusters(int n, string fields[], double distances[MAX_FIELDS][MAX_FIELDS], bool visited[], int clusters[MAX_FIELDS]) {
+    int clusterId = 0;
+    for (int i = 0; i < n; i++) {
+        if (!visited[i]) {
+            clusters[i] = clusterId;
+            visited[i] = true;
+
+            for (int j = 0; j < n; j++) {
+                if (distances[i][j] > 0 && !visited[j]) {  
+                    visited[j] = true;
+                    clusters[j] = clusterId;
+                }
+            }
+
+            clusterId++;
+        }
+    }
+}
+
+void dijkstra(int n, double distances[MAX_FIELDS][MAX_FIELDS], int start, string fields[]) {
+    double dist[MAX_FIELDS];
+    bool visited[MAX_FIELDS] = {false};
+
+    for (int i = 0; i < n; i++) {
+        dist[i] = numeric_limits<double>::infinity();
+    }
+    dist[start] = 0;
+
+    for (int i = 0; i < n; i++) {
+        int u = -1;
+        double minDist = numeric_limits<double>::infinity();
+
+        for (int j = 0; j < n; j++) {
+            if (!visited[j] && dist[j] < minDist) {
+                minDist = dist[j];
+                u = j;
+            }
+        }
+
+        if (u == -1) break;
+        visited[u] = true;
+
+        for (int v = 0; v < n; v++) {
+            if (distances[u][v] > 0) {
+                double newDist = dist[u] + distances[u][v];
+                if (newDist < dist[v]) {
+                    dist[v] = newDist;
+                }
+            }
+        }
+    }
+
+    cout << "\nShortest paths from " << fields[start] << ":" << endl;
+    for (int i = 0; i < n; i++) {
+        if (dist[i] == numeric_limits<double>::infinity()) {
+            cout << "  To " << fields[i] << ": No direct path." << endl;
+        } else {
+            cout << "  To " << fields[i] << ": " << fixed << setprecision(2) << dist[i] << " units" << endl;
+        }
+    }
+    cout << endl;
+}
+
+int main() {
+    string crops[] = {"Wheat", "Rice", "Corn", "Soybean", "Barley"};
+    int numCrops = 5;
+
+    cout << "Welcome to the Crop Field Network!" << endl;
+    cout << "Here are the available crop types:" << endl;
+    for (int i = 0; i < numCrops; ++i) {
+        cout << i + 1 << ". " << crops[i] << endl;
+    }
+
+    // Input crop details
+    int n;
+    cout << "\nHow many fields do you have? ";
+    cin >> n;
+
+    string fields[MAX_FIELDS];
+    string cropType[MAX_FIELDS]; 
+    for (int i = 0; i < n; ++i) {
+        cout << "\nField " << i + 1 << ":\n";
+        cout << "Enter field name: ";
+        cin >> fields[i];
+        int cropChoice;
+        cout << "Which crop does this field have? (Select a number) ";
+        cin >> cropChoice;
+
+        if (cropChoice < 1 || cropChoice > numCrops) {
+            cout << "Oops, that was an invalid choice! Please try again." << endl;
+            --i; // Retry the current field
+            continue;
+        }
+
+        cropType[i] = crops[cropChoice - 1];
+    }
+
+    // Input distances between fields
+    double distances[MAX_FIELDS][MAX_FIELDS] = {0}; 
+    int edges;
+    cout << "\nHow many connections between fields would you like to enter? ";
+    cin >> edges;
+
+    for (int i = 0; i < edges; ++i) {
+        string u, v;
+        double distance;
+        cout << "\nEnter connection " << i + 1 << " details:\n";
+        cout << "Field 1: ";
+        cin >> u;
+        cout << "Field 2: ";
+        cin >> v;
+        cout << "Distance (in units): ";
+        cin >> distance;
+
+        int uIndex = -1, vIndex = -1;
+        for (int i = 0; i < n; ++i) {
+            if (fields[i] == u) uIndex = i;
+            if (fields[i] == v) vIndex = i;
+        }
+
+        if (uIndex == -1 || vIndex == -1 || cropType[uIndex] != cropType[vIndex]) {
+            cout << "Can't connect these fields, they have different crops!" << endl;
+            continue;
+        }
+
+        addEdge(fields, distances, uIndex, vIndex, distance);
+    }
+
+    
+    bool visited[MAX_FIELDS] = {false};
+    int clusters[MAX_FIELDS] = {-1};
+    findClusters(n, fields, distances, visited, clusters);
+
+    // Step 2: Display clusters in a simple way
+    cout << "\nHere are the clusters of fields:" << endl;
+    for (int i = 0; i < n; i++) {
+        cout << fields[i] << " is in Cluster " << clusters[i] << endl;
+    }
+
+    // Step 3: Calculate shortest paths within each cluster
+    for (int i = 0; i < n; i++) {
+        dijkstra(n, distances, i, fields); 
+    }
+
+    cout << "Thank you for using the Crop Field Network!" << endl;
+
+    return 0;
+}
+
+				       </code></pre>
 			</article>
 
         </div>
